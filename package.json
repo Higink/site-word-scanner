@@ -1,0 +1,57 @@
+{
+  "name": "site-word-scanner",
+  "version": "1.0.0",
+  "description": "Crawl website pages and find all occurrences of a word in links, emails, and text content.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Higink/site-word-scanner"
+  },
+  "license": "CC BY-NC-SA",
+  "author": "Higink <higink@gmail.com>",
+  "keywords": [
+    "crawler",
+    "keyword-search",
+    "word-finder",
+    "content-search",
+    "text-mining"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "main": "dist/src/index.js",
+  "bin": {
+    "site-word-scanner": "dist/bin/cli.js"
+  },
+  "files": [
+    "dist/**/*",
+    "!dist/tests",
+    "!dist/tests/**/*"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "lint": "eslint",
+    "dev": "tsc --watch",
+    "build": "tsc",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "commander": "^14.0.1",
+    "axios": "^1.12.2",
+    "cheerio": "^1.1.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.38.0",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.8.1",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.38.0",
+    "globals": "^16.4.0",
+    "jest": "^30.2.0",
+    "jest-mock": "^30.2.0",
+    "ts-jest": "^29.4.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
