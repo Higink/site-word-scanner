@@ -24,7 +24,7 @@ const program = new Command();
 program
     .name('site-word-scanner')
     .description('Explore a website and list all word occurrences')
-    .version('1.0.0')
+    .version('1.0.1')
     .argument('<keyword>', 'Keyword to search for')
     .argument('<url>', 'Website URL to analyze')
     .option('-f, --format <format>', 'Output format (json or csv)')
