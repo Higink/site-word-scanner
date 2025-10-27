@@ -1,4 +1,4 @@
-import {analyzeLink} from '../lib/links';
+import {analyzeLink, isWebPageLink} from '../lib/links';
 
 describe('analyzeLink', () => {
     const baseUrl = 'https://example.com/page';
@@ -57,5 +57,40 @@ describe('analyzeLink', () => {
     it('should normalize URLs with query parameters', () => {
         expect(analyzeLink('/search?q=test&page=1', baseUrl))
             .toBe('https://example.com/search?q=test&page=1');
+    });
+});
+
+describe('isWebPageLink', () => {
+    const baseUrl = 'https://example.com';
+
+    test('devrait identifier correctement les pages web', () => {
+        expect(isWebPageLink('/page', baseUrl)).toBe(true);
+        expect(isWebPageLink('/page.html', baseUrl)).toBe(true);
+        expect(isWebPageLink('/page.php', baseUrl)).toBe(true);
+        expect(isWebPageLink('/page.aspx', baseUrl)).toBe(true);
+        expect(isWebPageLink('/folder/', baseUrl)).toBe(true);
+        expect(isWebPageLink('/', baseUrl)).toBe(true);
+        expect(isWebPageLink('/path/without/extension', baseUrl)).toBe(true);
+    });
+
+    test('devrait identifier correctement les fichiers', () => {
+        expect(isWebPageLink('/document.pdf', baseUrl)).toBe(false);
+        expect(isWebPageLink('/image.jpg', baseUrl)).toBe(false);
+        expect(isWebPageLink('/file.zip', baseUrl)).toBe(false);
+        expect(isWebPageLink('/document.docx', baseUrl)).toBe(false);
+        expect(isWebPageLink('/file.exe', baseUrl)).toBe(false);
+    });
+
+    test('devrait gérer les URLs malformées', () => {
+        expect(isWebPageLink('', baseUrl)).toBe(false);
+        expect(isWebPageLink('  ', baseUrl)).toBe(false);
+        expect(isWebPageLink('javascript:alert(1)', baseUrl)).toBe(false);
+        expect(isWebPageLink('data:text/plain;base64,SGVsbG8=', baseUrl)).toBe(false);
+        expect(isWebPageLink('mailto:test@example.com', baseUrl)).toBe(false);
+    });
+
+    test('devrait gérer les URLs avec paramètres de requête', () => {
+        expect(isWebPageLink('/page?param=value', baseUrl)).toBe(true);
+        expect(isWebPageLink('/file.pdf?download=true', baseUrl)).toBe(false);
     });
 });

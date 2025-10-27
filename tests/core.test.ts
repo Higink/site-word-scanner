@@ -154,4 +154,34 @@ describe('Core Scanner', () => {
             expect((result.visitedUrlsData[0] ?? {link:[]}).link[0]).toBe('https://wwww.turtle.com/');
         });
     });
+
+    describe('Gestion des URLs de fichiers', () => {
+        it('devrait ignorer les liens vers des fichiers', async () => {
+            mockedAxios.get.mockResolvedValueOnce({
+                status: 200,
+                data: `
+                    <html lang="fr">
+                        <a href="/document.pdf">PDF</a>
+                        <a href="http://perdu.com/image.jpg">Image</a>
+                        <a href="/image.jpg">Image</a>
+                        <a href="/archive.zip">Archive</a>
+                        <a href="/page.html">Page Web</a>
+                    </html>`
+            }).mockResolvedValue({
+                status: 200,
+                data: '<html lang="fr"></html>'
+            });
+
+            const result = await siteWordScanner('test', 'https://example.com', defaultOptions);
+            expect(result.success).toBe(true);
+
+            // Vérifie que seule l'URL de la page web est visitée
+            const visitedUrls = result.visitedUrlsData.map(data => data.url);
+            expect(visitedUrls).toContain('https://example.com/page.html');
+            expect(visitedUrls).not.toContain('https://example.com/document.pdf');
+            expect(visitedUrls).not.toContain('https://example.com/image.jpg');
+            expect(visitedUrls).not.toContain('https://perdu.com/image.jpg');
+            expect(visitedUrls).not.toContain('https://example.com/archive.zip');
+        });
+    });
 });
