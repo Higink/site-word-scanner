@@ -108,7 +108,7 @@ export function isWebPageLink(href: string, sourceUrl: string): boolean {
         return true; // No extension, likely a web page
 
     } catch (error) {
-        console.warn(`Error isWebPageLink for ${href}`);
+        console.warn(`Error isWebPageLink for ${href}`, error);
         return false;
     }
 }
