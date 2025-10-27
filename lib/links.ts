@@ -15,19 +15,19 @@ export function analyzeLink(link: string, sourceUrl: string): string | undefined
         if (link.startsWith('#')
             || link.startsWith('mailto:')
             || link.startsWith('ftp:')
+            || link.startsWith('data:')
+            || link.startsWith('javascript:')
             || link.startsWith('tel:')) {
             //@TODO search if can reverse condition (only http/https or relative)
             return;
         }
 
         const absoluteUrl = new URL(link, sourceUrl).toString();
-        const normalizedUrl = normalizeUrl(absoluteUrl);
-
         if (!isSameDomain(absoluteUrl, sourceUrl)) {
             return;
         }
 
-        return normalizedUrl;
+        return normalizeUrl(absoluteUrl);
     } catch (error) {
         console.error(`Error during link analysis: ${getErrorMessage(error)}`);
         return;
@@ -51,3 +51,65 @@ function isSameDomain(url1: string, url2: string): boolean {
         return false;
     }
 }
+
+
+/**
+ * Determines if a given link points to a web page or a file based on its extension
+ *
+ * @param href - The link URL to analyze (can be relative or absolute)
+ * @param sourceUrl - The base URL of the page where the link was found
+ * @returns true if the link is likely a web page, false if it's likely a file
+ */
+export function isWebPageLink(href: string, sourceUrl: string): boolean {
+    // Ignore empty links
+    if (!href || href.trim().length === 0) {
+        return false;
+    }
+
+    // Ignore special protocols
+    if (href.startsWith('mailto:')
+        || href.startsWith('#')
+        || href.startsWith('tel:')
+        || href.startsWith('ftp:')
+        || href.startsWith('javascript:')
+        || href.startsWith('data:')) {
+        return false;
+    }
+
+    try {
+        const webPageExtensions = [
+            'html', 'htm', 'php', 'asp', 'aspx', 'jsp', 'xhtml', 'cfm', 'shtm', 'shtml', 'rhtml', 'dhtml', 'py', 'rb', 'pl', 'cgi', 'jhtml', 'do', 'action', 'erb', 'ejs', 'vue', 'cshtml', 'tsx', 'jsx'
+        ];
+
+        const parsedUrl = new URL(href, sourceUrl);
+        const pathname = parsedUrl.pathname;
+
+        // Handle root path and folders
+        if (pathname === '/' || pathname.endsWith('/')) {
+            return true;
+        }
+
+        const segments = pathname.split('/');
+        const lastSegment = segments[segments.length - 1];
+
+        // If no last segment or empty, likely a directory
+        if (!lastSegment) {
+            return true;
+        }
+
+        if (lastSegment.includes('.')) {
+            const extension = lastSegment.split('.').pop();
+            if (extension) {
+                return webPageExtensions.includes(extension.toLowerCase());
+            } else {
+                return false;
+            }
+        }
+        return true; // No extension, likely a web page
+
+    } catch (error) {
+        console.warn(`Error isWebPageLink for ${href}`);
+        return false;
+    }
+}
+
