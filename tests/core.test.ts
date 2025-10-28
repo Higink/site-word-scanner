@@ -1,13 +1,13 @@
 import siteWordScanner from '../src/index';
 import axios, {AxiosError} from 'axios';
-import { ScanOptions } from '../types/scanOptions';
+import { AxiosOptions } from '../types/axiosOptions';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-const defaultOptions: ScanOptions = {
+const defaultOptions: AxiosOptions = {
     userAgent: 'TestBot/1.0',
-    timeout: 5000
+    timeout: '5000'
 };
 
 describe('Core Scanner', () => {

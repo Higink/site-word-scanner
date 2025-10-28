@@ -6,7 +6,7 @@ import {getDomainFromUrl} from '../utils/url';
 import normalizeUrl from './normalizeUrl';
 import {ScanResult} from '../types/scanResult';
 import {VisitedUrlData} from '../types/visitedUrlData';
-import {ScanOptions} from '../types/scanOptions';
+import {AxiosOptions} from '../types/axiosOptions';
 
 /**
  * Performs a complete scan of a website starting from a given URL
@@ -22,7 +22,7 @@ import {ScanOptions} from '../types/scanOptions';
  *   - error: error message if success is false
  *   - visitedUrlsData: array of objects containing visited URLs and their status codes
  */
-export async function scan(keyword: string, url: string, options: ScanOptions = {}): Promise<ScanResult> {
+export async function scan(keyword: string, url: string, options: AxiosOptions = {}): Promise<ScanResult> {
     let normalizedSourceURL;
     let domain;
 
@@ -52,12 +52,9 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
 
     while (urlsToVisit.size > 0) {
         const currentUrl = urlsToVisit.values().next().value;
-        console.log('\r\n===============================');
-        console.log(`[Visited:${visitedUrls.size}|Remaining:${urlsToVisit.size}]`);
-        console.log(`Start new analysis: ${currentUrl}`);
+        console.log(`${normalizedSourceURL} ${(100 * visitedUrls.size / (visitedUrls.size + urlsToVisit.size) >> 0)}% [Visited:${visitedUrls.size} | Remaining:${urlsToVisit.size}]`);;
 
         if (typeof currentUrl !== 'string') {
-            console.error(`URL isn’t a string: ${currentUrl}`);
             // @ts-ignore
             urlsToVisit.delete(currentUrl);
             continue;
@@ -72,10 +69,8 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 headers: {
                     'User-Agent': options.userAgent || 'Mozilla/5.0 (compatible; SiteWordScanner/1.0)',
                 },
-                timeout: options.timeout || 0, // default axios is no timeout
+                timeout: options.timeout ? parseInt(options.timeout) : 0, // default axios is no timeout
             });
-
-            console.log(`Page status: ${response.status}`);
 
             // Parse HTML
             const $ = cheerio.load(response.data);
@@ -88,7 +83,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 const start = Math.max(0, lastIndex - 30);
                 const end = Math.min(bodyText.length, lastIndex + 36);
                 let context = bodyText.slice(start, end).replace(/\s+/g, ' ').trim();
-                console.log(`[TEXT] ...${context}...`);
                 textOccurrences.push(context);
                 lastIndex += keyword.length;
             }
@@ -102,7 +96,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                     const emailMatch = mailtoHref.match(new RegExp(`mailto:(.*${keyword}.*)`));
                     if (emailMatch && emailMatch[1]) {
                         const email = emailMatch[1];
-                        console.log(`[EMAIL] ${email}`);
                         mailtoOccurrences.push(email);
                     }
                 }
@@ -116,7 +109,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 if (href) {
                     const absoluteUrl = new URL(href, currentUrl);
                     if (absoluteUrl.hostname.includes(`${keyword}.`)) {
-                        console.log(`[LINK] ${absoluteUrl.toString()}`);
                         linkOccurrences.push(absoluteUrl.toString());
                     }
                 }
@@ -128,7 +120,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 if (href && isWebPageLink(href, normalizedSourceURL)) {
                     const validatedLink = analyzeLink(href, normalizedSourceURL);
                     if (validatedLink && !visitedUrls.has(validatedLink) && !urlsToVisit.has(validatedLink)) {
-                        console.log(`\tFound a new link to visit: ${href}`);
                         urlsToVisit.add(validatedLink);
                     }
                 }
@@ -158,7 +149,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 }
             }
 
-            console.log(`Page status: ${errorType}`);
             statusCodesCount[errorType] = (statusCodesCount[errorType] || 0) + 1;
             visitedUrlsData.push({
                 url: currentUrl,
@@ -171,7 +161,6 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
         }
     }
 
-    console.log('End of scan');
     return {
         generatedAt: new Date().toISOString(),
         domain: domain,
