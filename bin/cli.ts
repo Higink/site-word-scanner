@@ -27,11 +27,11 @@ program
     .version('1.0.1')
     .argument('<keyword>', 'Keyword to search for')
     .argument('<url>', 'Website URL to analyze')
-    .option('-f, --format <format>', 'Output format (json or csv)')
-    .option('-d, --directory <path>', 'Output directory')
-    .option('-o, --output <filename>', 'Output filename')
-    .option('-t, --timeout <number>', 'Request timeout in milliseconds')
-    .option('-u, --user-agent <string>', 'Custom User-Agent string')
+    .option('-f, --format <format>', 'output format (json or csv)')
+    .option('-d, --directory <path>', 'output directory')
+    .option('-o, --output <filename>', 'output filename')
+    .option('-t, --timeout <number>', 'request timeout in milliseconds')
+    .option('-u, --user-agent <string>', 'custom User-Agent string')
     .action(async (keyword: string, url: string, options) => {
         try {
             const lowerKeyword = keyword.toLowerCase();

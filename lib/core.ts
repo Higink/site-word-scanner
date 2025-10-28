@@ -1,7 +1,7 @@
 import {getErrorMessage} from '../utils/error';
 import axios, {AxiosError} from 'axios';
 import * as cheerio from 'cheerio';
-import {analyzeLink} from './links';
+import {analyzeLink, isWebPageLink} from './links';
 import {getDomainFromUrl} from '../utils/url';
 import normalizeUrl from './normalizeUrl';
 import {ScanResult} from '../types/scanResult';
@@ -23,13 +23,13 @@ import {ScanOptions} from '../types/scanOptions';
  *   - visitedUrlsData: array of objects containing visited URLs and their status codes
  */
 export async function scan(keyword: string, url: string, options: ScanOptions = {}): Promise<ScanResult> {
-    let normalizedURL;
+    let normalizedSourceURL;
     let domain;
 
     try {
-        normalizedURL = normalizeUrl(url);
+        normalizedSourceURL = normalizeUrl(url);
         domain = getDomainFromUrl(url);
-        if (!normalizedURL || !domain) {
+        if (!normalizedSourceURL || !domain) {
             throw new Error('The URL is not valid');
         }
     } catch (error) {
@@ -48,7 +48,7 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
     const visitedUrlsData: VisitedUrlData[] = [];
     const statusCodesCount: { [key: string]: number } = {};
 
-    urlsToVisit.add(normalizedURL);
+    urlsToVisit.add(normalizedSourceURL);
 
     while (urlsToVisit.size > 0) {
         const currentUrl = urlsToVisit.values().next().value;
@@ -125,8 +125,8 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
             // Find next links to visit
             pageLinks.each((_, element) => {
                 const href = $(element).attr('href');
-                if (href) {
-                    const validatedLink = analyzeLink(href, normalizedURL);
+                if (href && isWebPageLink(href, normalizedSourceURL)) {
+                    const validatedLink = analyzeLink(href, normalizedSourceURL);
                     if (validatedLink && !visitedUrls.has(validatedLink) && !urlsToVisit.has(validatedLink)) {
                         console.log(`\tFound a new link to visit: ${href}`);
                         urlsToVisit.add(validatedLink);
