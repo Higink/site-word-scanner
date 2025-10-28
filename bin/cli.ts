@@ -17,14 +17,15 @@
  * -u, --user-agent: custom User-Agent string
  */
 
-import * as fs from "node:fs";
+import * as fs from 'node:fs';
 import * as path from 'path';
 import console from 'node:console';
 import {Command} from 'commander';
 import siteWordScanner from '../src/index';
-import {ScanResult} from "../types/scanResult";
+import {ScanResult} from '../types/scanResult';
 import {generateOutputFilename, saveAsCSV, saveAsJSON} from '../lib/save';
 import {getErrorMessage} from '../utils/error';
+import {CliOptions} from '../types/cliOptions';
 
 /**
  * Loads URLs from a file or a single URL string.
@@ -45,8 +46,9 @@ function loadUrls(input: string): string[] {
                 .filter(line => line.length > 0);
             console.log(`Found ${extractedUrls.length} URLs to process`);
             return extractedUrls;
-        } catch (error: any) { //@TODO type
-            console.error('Failed to read the file, if you meant to provide a URL, please ensure it starts with http:// or https://')
+        } catch (error) {
+            console.error('Failed to read the file, if you meant to provide a URL, please ensure it starts with http:// or https://');
+            // @ts-ignore
             throw new Error(error.toString());
         }
     }
@@ -58,7 +60,7 @@ function loadUrls(input: string): string[] {
  * @param keyword - The keyword to search for.
  * @param options - The options for the scan.
  */
-async function processURL(url: string, keyword: string, options: any): Promise<ScanResult> { //@TODO type
+async function processURL(url: string, keyword: string, options: CliOptions): Promise<ScanResult> {
     const resultData = await siteWordScanner(keyword, url, {
         userAgent: options.userAgent,
         timeout: options.timeout,
@@ -77,7 +79,7 @@ async function processURL(url: string, keyword: string, options: any): Promise<S
  * @param url - The URL that was scanned.
  * @param options - The options provided to the CLI.
  */
-function saveResult(resultData: ScanResult, url: string, options: any) {
+function saveResult(resultData: ScanResult, url: string, options: CliOptions): void {
     const format = options.format.toLowerCase();
     const filename = generateOutputFilename(url, format);
     const outputDir = options.directory || '.';
@@ -105,20 +107,23 @@ function saveResult(resultData: ScanResult, url: string, options: any) {
  * @param options - The options for the scan.
  * @param parallelScans - The number of parallel scans to run.
  */
-function createUrlLoader(urls: string[], keyword: string, options: any, parallelScans: number) {
+function createUrlLoader(urls: string[], keyword: string, options: CliOptions, parallelScans: number): void {
     const remaining = [...urls];
     let inProgress = 0;
 
-    function loadNext() {
+    function loadNext(): void {
         const url = remaining.shift();
+        if (!url) {
+            return;
+        }
+
         inProgress++;
         console.log('===============================');
         console.log(`Start domain scan for: ${url}`);
         console.log(`Domains remaining: ${remaining.length}`);
         console.log('===============================');
 
-        // @ts-ignore
-        processURL(url, keyword, options) //@TODO fix URL
+        processURL(url, keyword, options)
             .then(resultData => {
                 inProgress--;
 
@@ -136,7 +141,7 @@ function createUrlLoader(urls: string[], keyword: string, options: any, parallel
                         process.exit(0);
                     }
                 }
-            })
+            });
     }
 
     const initialLoads = Math.min(parallelScans, urls.length);
@@ -150,7 +155,7 @@ const program = new Command();
 program
     .name('site-word-scanner')
     .description('Explore websites and list all word occurrences')
-    .version('1.0.1')
+    .version('2.0.0')
     .argument('<keyword>', 'Keyword to search for')
     .argument('<input>', 'Website URL starting by HTTP or HTTPS to analyze or path to a file containing URLs (one per line)')
     .option('-f, --format <format>', 'output format (json or csv)', 'json')
@@ -158,7 +163,7 @@ program
     .option('-p, --parallel <number>', 'number of parallel scans', '3')
     .option('-t, --timeout <number>', 'request timeout in milliseconds')
     .option('-u, --user-agent <string>', 'custom User-Agent string')
-    .action(async (keyword: string, input: string, options) => { // @TODO type des paramètres
+    .action(async (keyword: string, input: string, options: CliOptions) => {
         try {
             const lowerKeyword = keyword.toLowerCase();
             if (!lowerKeyword || lowerKeyword.length === 0) {
@@ -166,7 +171,7 @@ program
             }
 
             const parallelScans = parseInt(options.parallel) || 3;
-            const urls: string[] = await loadUrls(input);
+            const urls: string[] = loadUrls(input);
             console.log(`Start search for "${keyword}"`);
             createUrlLoader(urls, lowerKeyword, options, parallelScans);
         } catch (error) {

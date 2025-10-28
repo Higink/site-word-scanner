@@ -18,7 +18,6 @@ export function analyzeLink(link: string, sourceUrl: string): string | undefined
             || link.startsWith('data:')
             || link.startsWith('javascript:')
             || link.startsWith('tel:')) {
-            //@TODO search if can reverse condition (only http/https or relative)
             return;
         }
 

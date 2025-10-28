@@ -6,7 +6,7 @@ import {getDomainFromUrl} from '../utils/url';
 import normalizeUrl from './normalizeUrl';
 import {ScanResult} from '../types/scanResult';
 import {VisitedUrlData} from '../types/visitedUrlData';
-import {ScanOptions} from '../types/scanOptions';
+import {AxiosOptions} from '../types/axiosOptions';
 
 /**
  * Performs a complete scan of a website starting from a given URL
@@ -22,7 +22,7 @@ import {ScanOptions} from '../types/scanOptions';
  *   - error: error message if success is false
  *   - visitedUrlsData: array of objects containing visited URLs and their status codes
  */
-export async function scan(keyword: string, url: string, options: ScanOptions = {}): Promise<ScanResult> {
+export async function scan(keyword: string, url: string, options: AxiosOptions = {}): Promise<ScanResult> {
     let normalizedSourceURL;
     let domain;
 
@@ -69,7 +69,7 @@ export async function scan(keyword: string, url: string, options: ScanOptions = 
                 headers: {
                     'User-Agent': options.userAgent || 'Mozilla/5.0 (compatible; SiteWordScanner/1.0)',
                 },
-                timeout: options.timeout || 0, // default axios is no timeout
+                timeout: options.timeout ? parseInt(options.timeout) : 0, // default axios is no timeout
             });
 
             // Parse HTML
